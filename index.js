@@ -102,6 +102,9 @@ function generateHiddifyURL(config) {
     return `ss://${auth}@${config.server}:${config.port}#EdenVault`;
 }
 
+// Store user VPN configs temporarily
+const userConfigs = new Map();
+
 // Main message handler for VPN keys
 bot.on('text', async (ctx) => {
     const message = ctx.message.text;
@@ -118,56 +121,149 @@ bot.on('text', async (ctx) => {
         // Parse the Outline key
         const config = parseOutlineKey(message);
         
-        // Generate different formats
-        const v2rayNG = generateV2rayNG(config);
-        const clashYAML = generateClashYAML(config);
-        const hiddifyURL = generateHiddifyURL(config);
+        // Store config for this user
+        userConfigs.set(ctx.from.id, config);
         
-        // Send V2rayNG format
-        await ctx.replyWithMarkdown(`
-📱 **V2rayNG Format:**
-\`\`\`json
-${v2rayNG}
-\`\`\`
-        `);
-        
-        // Send Clash YAML format
-        await ctx.replyWithMarkdown(`
-⚔️ **V2Box (Clash) Format:**
-\`\`\`yaml
-${clashYAML}
-\`\`\`
-        `);
-        
-        // Generate and send QR code for Hiddify
-        const qrBuffer = await QRCode.toBuffer(hiddifyURL);
-        
-        await ctx.replyWithPhoto(
-            { source: qrBuffer },
-            {
-                caption: `📱 **Hiddify QR Code**\n\nScan this QR code with Hiddify app\n\nOr use this URL:\n\`${hiddifyURL}\``,
-                parse_mode: 'Markdown'
-            }
-        );
-        
-        // Send summary
-        await ctx.replyWithMarkdown(`
-✅ **Conversion Complete!**
+        // Send options with inline buttons
+        await ctx.replyWithMarkdown(
+            `✅ **VPN Key Parsed Successfully!**
 
 🔐 **Server Details:**
 • Server: \`${config.server}\`
 • Port: \`${config.port}\`
 • Method: \`${config.method}\`
 
-📲 **Use the formats above in:**
-• V2rayNG (JSON config)
-• V2Box/Clash (YAML config)  
-• Hiddify (QR code or URL)
-        `);
+📲 **Choose your preferred format:**`,
+            {
+                reply_markup: {
+                    inline_keyboard: [
+                        [
+                            { text: '📱 V2rayNG', callback_data: 'format_v2rayng' },
+                            { text: '⚔️ V2Box (Clash)', callback_data: 'format_v2box' }
+                        ],
+                        [
+                            { text: '🔍 Hiddify (QR)', callback_data: 'format_hiddify' }
+                        ],
+                        [
+                            { text: '📋 All Formats', callback_data: 'format_all' }
+                        ]
+                    ]
+                }
+            }
+        );
         
     } catch (error) {
         console.error('Conversion error:', error);
         ctx.reply('❌ Failed to convert VPN key. Please check the format and try again.');
+    }
+});
+
+// Handle inline button callbacks
+bot.on('callback_query', async (ctx) => {
+    const userId = ctx.from.id;
+    const config = userConfigs.get(userId);
+    
+    if (!config) {
+        return ctx.answerCbQuery('❌ No VPN config found. Please send a new Outline key.');
+    }
+    
+    const data = ctx.callbackQuery.data;
+    
+    try {
+        switch (data) {
+            case 'format_v2rayng':
+                const v2rayNG = generateV2rayNG(config);
+                await ctx.replyWithMarkdown(`
+📱 **V2rayNG Format:**
+\`\`\`json
+${v2rayNG}
+\`\`\`
+
+💡 **How to use:**
+1. Copy the JSON config above
+2. Open V2rayNG app
+3. Tap '+' → Import config from clipboard
+                `);
+                break;
+                
+            case 'format_v2box':
+                const clashYAML = generateClashYAML(config);
+                await ctx.replyWithMarkdown(`
+⚔️ **V2Box (Clash) Format:**
+\`\`\`yaml
+${clashYAML}
+\`\`\`
+
+💡 **How to use:**
+1. Copy the YAML config above
+2. Open V2Box app
+3. Add the config to your profiles
+                `);
+                break;
+                
+            case 'format_hiddify':
+                const hiddifyURL = generateHiddifyURL(config);
+                const qrBuffer = await QRCode.toBuffer(hiddifyURL);
+                
+                await ctx.replyWithPhoto(
+                    { source: qrBuffer },
+                    {
+                        caption: `📱 **Hiddify QR Code**\n\nScan this QR code with Hiddify app\n\nOr use this URL:\n\`${hiddifyURL}\`\n\n💡 **How to use:**\n1. Scan QR code with Hiddify\n2. Or copy URL and import manually`,
+                        parse_mode: 'Markdown'
+                    }
+                );
+                break;
+                
+            case 'format_all':
+                const v2rayNGAll = generateV2rayNG(config);
+                const clashYAMLAll = generateClashYAML(config);
+                const hiddifyURLAll = generateHiddifyURL(config);
+                
+                // Send V2rayNG format
+                await ctx.replyWithMarkdown(`
+📱 **V2rayNG Format:**
+\`\`\`json
+${v2rayNGAll}
+\`\`\`
+                `);
+                
+                // Send Clash YAML format
+                await ctx.replyWithMarkdown(`
+⚔️ **V2Box (Clash) Format:**
+\`\`\`yaml
+${clashYAMLAll}
+\`\`\`
+                `);
+                
+                // Generate and send QR code for Hiddify
+                const qrBufferAll = await QRCode.toBuffer(hiddifyURLAll);
+                
+                await ctx.replyWithPhoto(
+                    { source: qrBufferAll },
+                    {
+                        caption: `📱 **Hiddify QR Code**\n\nScan this QR code with Hiddify app\n\nOr use this URL:\n\`${hiddifyURLAll}\``,
+                        parse_mode: 'Markdown'
+                    }
+                );
+                
+                await ctx.replyWithMarkdown(`
+✅ **All Formats Generated!**
+
+📲 **Use the formats above in:**
+• V2rayNG (JSON config)
+• V2Box/Clash (YAML config)  
+• Hiddify (QR code or URL)
+                `);
+                break;
+        }
+        
+        // Answer the callback query
+        await ctx.answerCbQuery('✅ Format generated!');
+        
+    } catch (error) {
+        console.error('Callback error:', error);
+        await ctx.answerCbQuery('❌ Error generating format');
+        ctx.reply('❌ An error occurred while generating the format. Please try again.');
     }
 });
 
