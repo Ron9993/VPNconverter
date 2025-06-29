@@ -367,3 +367,82 @@ process.once('SIGINT', () => bot.stop('SIGINT'));
 process.once('SIGTERM', () => bot.stop('SIGTERM'));
 
 console.log('✅ Bot is running!');
+
+// Function to parse Outline VPN key
+function parseOutlineKey(outlineKey) {
+    try {
+        // Extract ss:// URL
+        const ssMatch = outlineKey.match(/ss:\/\/([^\/\?#]+)/);
+        if (!ssMatch) {
+            throw new Error('Invalid Outline key format');
+        }
+        
+        const encoded = ssMatch[1];
+        const decoded = Base64.decode(encoded);
+        
+        // Parse method:password@server:port
+        const match = decoded.match(/^(.+?):(.+?)@(.+?):(\d+)$/);
+        if (!match) {
+            throw new Error('Invalid decoded format');
+        }
+        
+        return {
+            method: match[1],
+            password: match[2], 
+            server: match[3],
+            port: parseInt(match[4])
+        };
+    } catch (error) {
+        throw new Error('Failed to parse Outline key: ' + error.message);
+    }
+}
+
+// Function to generate V2rayNG config
+function generateV2rayNG(config) {
+    const v2rayConfig = {
+        v: "2",
+        ps: "EdenVault",
+        add: config.server,
+        port: config.port,
+        id: "",
+        aid: "0",
+        scy: "auto",
+        net: "tcp",
+        type: "none",
+        host: "",
+        path: "",
+        tls: "",
+        sni: "",
+        alpn: "",
+        fp: ""
+    };
+    
+    return JSON.stringify(v2rayConfig, null, 2);
+}
+
+// Function to generate Clash YAML config
+function generateClashYAML(config) {
+    return `proxies:
+  - name: "EdenVault"
+    type: ss
+    server: ${config.server}
+    port: ${config.port}
+    cipher: ${config.method}
+    password: "${config.password}"
+    udp: true
+
+proxy-groups:
+  - name: "EdenVault-Group"
+    type: select
+    proxies:
+      - "EdenVault"
+
+rules:
+  - MATCH,EdenVault-Group`;
+}
+
+// Function to generate Hiddify URL
+function generateHiddifyURL(config) {
+    const auth = Base64.encode(`${config.method}:${config.password}`);
+    return `ss://${auth}@${config.server}:${config.port}#EdenVault`;
+}
