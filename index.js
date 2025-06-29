@@ -288,18 +288,21 @@ bot.on('text', async (ctx) => {
         const config = parseOutlineKey(message);
         const selectedFormat = userSelectedFormats.get(userId);
 
-        // Generate the requested format
-        switch (selectedFormat) {
-            case 'v2rayng':
-                const v2rayNG = generateV2rayNG(config);
-                await ctx.replyWithMarkdown(`
+        // First message: Server details
+        await ctx.replyWithMarkdown(`
 ${getMessage(userId, 'keyParsed')}
 
 ${getMessage(userId, 'serverDetails')}:
 • Server: \`${config.server}\`
 • Port: \`${config.port}\`
 • Method: \`${config.method}\`
+        `);
 
+        // Second message: Generated format
+        switch (selectedFormat) {
+            case 'v2rayng':
+                const v2rayNG = generateV2rayNG(config);
+                await ctx.replyWithMarkdown(`
 ${getMessage(userId, 'v2rayFormat')}:
 \`\`\`json
 ${v2rayNG}
@@ -312,13 +315,6 @@ ${getMessage(userId, 'howToUseV2ray')}
             case 'v2box':
                 const clashYAML = generateClashYAML(config);
                 await ctx.replyWithMarkdown(`
-${getMessage(userId, 'keyParsed')}
-
-${getMessage(userId, 'serverDetails')}:
-• Server: \`${config.server}\`
-• Port: \`${config.port}\`
-• Method: \`${config.method}\`
-
 ${getMessage(userId, 'v2boxFormat')}:
 \`\`\`yaml
 ${clashYAML}
@@ -331,15 +327,6 @@ ${getMessage(userId, 'howToUseV2box')}
             case 'hiddify':
                 const hiddifyURL = generateHiddifyURL(config);
                 const qrBuffer = await QRCode.toBuffer(hiddifyURL);
-
-                await ctx.replyWithMarkdown(`
-${getMessage(userId, 'keyParsed')}
-
-${getMessage(userId, 'serverDetails')}:
-• Server: \`${config.server}\`
-• Port: \`${config.port}\`
-• Method: \`${config.method}\`
-                `);
 
                 await ctx.replyWithPhoto(
                     { source: qrBuffer },
