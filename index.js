@@ -390,26 +390,35 @@ console.log('✅ Bot is running!');
 // Function to parse Outline VPN key
 function parseOutlineKey(outlineKey) {
     try {
-        // Extract ss:// URL
-        const ssMatch = outlineKey.match(/ss:\/\/([^\/\?#]+)/);
+        // Extract ss:// URL and remove any query parameters
+        const ssMatch = outlineKey.match(/ss:\/\/([^\/\?#]+)@([^\/\?#]+)/);
         if (!ssMatch) {
             throw new Error('Invalid Outline key format');
         }
         
-        const encoded = ssMatch[1];
-        const decoded = Base64.decode(encoded);
+        const encodedAuth = ssMatch[1];
+        const serverPort = ssMatch[2];
         
-        // Parse method:password@server:port
-        const match = decoded.match(/^(.+?):(.+?)@(.+?):(\d+)$/);
-        if (!match) {
-            throw new Error('Invalid decoded format');
+        // Decode the base64 encoded method:password part
+        const decodedAuth = Base64.decode(encodedAuth);
+        
+        // Parse method:password
+        const authMatch = decodedAuth.match(/^(.+?):(.+)$/);
+        if (!authMatch) {
+            throw new Error('Invalid auth format');
+        }
+        
+        // Parse server:port
+        const serverMatch = serverPort.match(/^(.+?):(\d+)$/);
+        if (!serverMatch) {
+            throw new Error('Invalid server:port format');
         }
         
         return {
-            method: match[1],
-            password: match[2], 
-            server: match[3],
-            port: parseInt(match[4])
+            method: authMatch[1],
+            password: authMatch[2], 
+            server: serverMatch[1],
+            port: parseInt(serverMatch[2])
         };
     } catch (error) {
         throw new Error('Failed to parse Outline key: ' + error.message);
