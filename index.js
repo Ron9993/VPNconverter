@@ -28,6 +28,7 @@ const messages = {
 • Convert Outline VPN keys to V2Box (Clash) format
 • Convert to V2rayNG format  
 • Generate Hiddify QR codes
+• Convert to Shadowrocket format
 
 🔧 **How to use:**
 1. Choose your preferred format below
@@ -69,6 +70,7 @@ const messages = {
 • Outline VPN keys များကို V2Box (Clash) format သို့ပြောင်းခြင်း
 • V2rayNG format သို့ပြောင်းခြင်း  
 • Hiddify QR codes များ ဖန်တီးခြင်း
+• Shadowrocket format သို့ပြောင်းခြင်း
 
 🔧 **အသုံးပြုပုံ:**
 1. အောက်တွင် သင့်နှစ်သက်တဲ့ format ကို ရွေးချယ်ပါ
@@ -110,6 +112,7 @@ const messages = {
 • 将 Outline VPN 密钥转换为 V2Box (Clash) 格式
 • 转换为 V2rayNG 格式
 • 生成 Hiddify 二维码
+• 转换为 Shadowrocket 格式
 
 🔧 **使用方法：**
 1. 在下方选择您的首选格式
