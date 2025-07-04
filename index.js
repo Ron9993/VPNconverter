@@ -1,4 +1,3 @@
-
 require('dotenv').config();
 const { Telegraf } = require('telegraf');
 const QRCode = require('qrcode');
@@ -51,9 +50,11 @@ const messages = {
         v2rayng: "📱 V2rayNG",
         v2box: "⚔️ V2Box (Clash)",
         hiddify: "🔍 Hiddify (QR)",
+        shadowrocket: "🚀 Shadowrocket",
         v2rayFormat: "📱 **V2rayNG Format:**",
         v2boxFormat: "⚔️ **V2Box (Clash) Format:**",
         hiddifyQR: "📱 **Hiddify QR Code**",
+        shadowrocketFormat: "🚀 **Shadowrocket Format:**",
         howToUseV2ray: "💡 **How to use:**\n1. Copy the JSON config above\n2. Open V2rayNG app\n3. Tap '+' → Import config from clipboard",
         howToUseV2box: "💡 **How to use:**\n1. Copy the YAML config above\n2. Open V2Box app\n3. Add the config to your profiles",
         howToUseHiddify: "💡 **How to use:**\n1. Scan QR code with Hiddify\n2. Or copy URL and import manually",
@@ -90,9 +91,11 @@ const messages = {
         v2rayng: "📱 V2rayNG",
         v2box: "⚔️ V2Box (Clash)",
         hiddify: "🔍 Hiddify (QR)",
+        shadowrocket: "🚀 Shadowrocket",
         v2rayFormat: "📱 **V2rayNG Format:**",
         v2boxFormat: "⚔️ **V2Box (Clash) Format:**",
         hiddifyQR: "📱 **Hiddify QR Code**",
+        shadowrocketFormat: "🚀 **Shadowrocket Format:**",
         howToUseV2ray: "💡 **အသုံးပြုပုံ:**\n1. အပေါ်က JSON config ကို ကူးယူပါ\n2. V2rayNG app ကို ဖွင့်ပါ\n3. '+' ကို နှိပ်ပါ → clipboard မှ config ကို import လုပ်ပါ",
         howToUseV2box: "💡 **အသုံးပြုပုံ:**\n1. အပေါ်က YAML config ကို ကူးယူပါ\n2. V2Box app ကို ဖွင့်ပါ\n3. သင့် profiles တွင် config ကို ထည့်ပါ",
         howToUseHiddify: "💡 **အသုံးပြုပုံ:**\n1. Hiddify နှင့် QR code ကို စကင်န်လုပ်ပါ\n2. သို့မဟုတ် URL ကို ကူးယူပြီး ကိုယ်တိုင် import လုပ်ပါ",
@@ -129,9 +132,11 @@ const messages = {
         v2rayng: "📱 V2rayNG",
         v2box: "⚔️ V2Box (Clash)",
         hiddify: "🔍 Hiddify (QR)",
+        shadowrocket: "🚀 Shadowrocket",
         v2rayFormat: "📱 **V2rayNG 格式：**",
         v2boxFormat: "⚔️ **V2Box (Clash) 格式：**",
         hiddifyQR: "📱 **Hiddify 二维码**",
+        shadowrocketFormat: "🚀 **Shadowrocket Format:**",
         howToUseV2ray: "💡 **使用方法：**\n1. 复制上面的 JSON 配置\n2. 打开 V2rayNG 应用\n3. 点击 '+' → 从剪贴板导入配置",
         howToUseV2box: "💡 **使用方法：**\n1. 复制上面的 YAML 配置\n2. 打开 V2Box 应用\n3. 将配置添加到您的配置文件中",
         howToUseHiddify: "💡 **使用方法：**\n1. 用 Hiddify 扫描二维码\n2. 或复制 URL 手动导入",
@@ -182,7 +187,7 @@ bot.on('callback_query', async (ctx) => {
         const lang = data.split('_')[1];
         userLanguages.set(userId, lang);
         await ctx.answerCbQuery(`✅ Language set to ${lang}`);
-        
+
         // Show format selection after language selection
         await ctx.replyWithMarkdown(
             getMessage(userId, 'welcome'),
@@ -194,7 +199,8 @@ bot.on('callback_query', async (ctx) => {
                             { text: getMessage(userId, 'v2box'), callback_data: 'format_v2box' }
                         ],
                         [
-                            { text: getMessage(userId, 'hiddify'), callback_data: 'format_hiddify' }
+                            { text: getMessage(userId, 'hiddify'), callback_data: 'format_hiddify' },
+                            { text: getMessage(userId, 'shadowrocket'), callback_data: 'format_shadowrocket' }
                         ]
                     ]
                 }
@@ -205,13 +211,14 @@ bot.on('callback_query', async (ctx) => {
     else if (data.startsWith('format_')) {
         const format = data.split('_')[1];
         userSelectedFormats.set(userId, format);
-        
+
         const formatNames = {
             'v2rayng': getMessage(userId, 'v2rayng'),
             'v2box': getMessage(userId, 'v2box'),
-            'hiddify': getMessage(userId, 'hiddify')
+            'hiddify': getMessage(userId, 'hiddify'),
+            'shadowrocket': getMessage(userId, 'shadowrocket')
         };
-        
+
         await ctx.answerCbQuery(getMessage(userId, 'formatSelected'));
         await ctx.replyWithMarkdown(
             `${getMessage(userId, 'formatSelected')} **${formatNames[format]}**\n\n${getMessage(userId, 'sendKey')} ${formatNames[format]} format.`,
@@ -239,7 +246,8 @@ bot.on('callback_query', async (ctx) => {
                             { text: getMessage(userId, 'v2box'), callback_data: 'format_v2box' }
                         ],
                         [
-                            { text: getMessage(userId, 'hiddify'), callback_data: 'format_hiddify' }
+                            { text: getMessage(userId, 'hiddify'), callback_data: 'format_hiddify' },
+                            { text: getMessage(userId, 'shadowrocket'), callback_data: 'format_shadowrocket' }
                         ]
                     ]
                 }
@@ -336,6 +344,15 @@ ${getMessage(userId, 'howToUseV2box')}
                     }
                 );
                 break;
+            case 'shadowrocket':
+                const shadowrocketURL = generateShadowrocketURL(config);
+                await ctx.replyWithMarkdown(`
+${getMessage(userId, 'shadowrocketFormat')}:
+\`\`\`
+${shadowrocketURL}
+\`\`\`
+`);
+                break;
         }
 
         // Add option to change format
@@ -382,32 +399,32 @@ function parseOutlineKey(outlineKey) {
         if (!ssMatch) {
             throw new Error('Invalid Outline key format');
         }
-        
+
         const encodedAuth = ssMatch[1];
         const serverPort = ssMatch[2];
-        
+
         // Decode the base64 encoded method:password part
         const decodedAuth = Base64.decode(encodedAuth);
-        
+
         // Parse method:password
         const authMatch = decodedAuth.match(/^(.+?):(.+)$/);
         if (!authMatch) {
             throw new Error('Invalid auth format');
         }
-        
+
         // Parse server:port
         const serverMatch = serverPort.match(/^(.+?):(\d+)$/);
         if (!serverMatch) {
             throw new Error('Invalid server:port format');
         }
-        
+
         return {
             method: authMatch[1],
             password: authMatch[2], 
             server: serverMatch[1],
             port: parseInt(serverMatch[2])
         };
-    } catch (error) {
+    } catch (        error) {
         throw new Error('Failed to parse Outline key: ' + error.message);
     }
 }
@@ -431,7 +448,7 @@ function generateV2rayNG(config) {
         alpn: "",
         fp: ""
     };
-    
+
     return JSON.stringify(v2rayConfig, null, 2);
 }
 
@@ -458,6 +475,12 @@ rules:
 
 // Function to generate Hiddify URL
 function generateHiddifyURL(config) {
+    const auth = Base64.encode(`${config.method}:${config.password}`);
+    return `ss://${auth}@${config.server}:${config.port}#EdenVault`;
+}
+
+// Function to generate Shadowrocket URL
+function generateShadowrocketURL(config) {
     const auth = Base64.encode(`${config.method}:${config.password}`);
     return `ss://${auth}@${config.server}:${config.port}#EdenVault`;
 }
